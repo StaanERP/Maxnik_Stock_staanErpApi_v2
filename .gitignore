@@ -1,0 +1,25 @@
+venv/
+env/
+idea/
+Staanenquiryfromwithazure/__pycache__/
+itemmaster/__pycache__/
+EnquriFromapi/__pycache__/
+itemmaster/mutations/__pycache__/
+itemmaster\__pycache__
+# Ignore all files inside static/PDF_OUTPUT/
+static/PDF_OUTPUT/*.pdf
+static/PDF_OUTPUT/*.docx
+
+# But do NOT ignore the folder itself
+!static/PDF_OUTPUT/
+
+*.log
+*.pot
+*.pyc
+__pycache__/
+
+
+# docker files
+*.tar
+*.tar.gz
+*.zip

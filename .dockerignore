@@ -1,0 +1,32 @@
+# Ignore Python cache & env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+
+# Ignore venv
+venv/
+.env/
+.venv/
+
+# Ignore Git
+.git
+.gitignore
+
+# Ignore IDEs
+.vscode/
+.idea/
+
+# Ignore logs
+*.log
+
+# Ignore node modules (if frontend is here)
+node_modules/
+
+# Ignore OneDrive junk
+*.tmp
+*.bak
+*.swp
+~$*

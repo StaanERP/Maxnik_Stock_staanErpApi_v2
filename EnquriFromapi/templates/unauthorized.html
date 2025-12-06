@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Unauthorized Access</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #0f0f0f;
+      color: #ffffff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 6rem;
+      color: #ffffff;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      color: #e0e0e0;
+    }
+
+    p {
+      font-size: 1rem;
+      color: #aaa;
+      margin-bottom: 30px;
+    }
+
+    .bot-img {
+      max-width: 250px;
+      margin-bottom: 20px;
+    }
+
+    a.button {
+      background-color: #6c63ff;
+      color: white;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      transition: background-color 0.3s ease;
+    }
+
+    a.button:hover {
+      background-color: #4f47c1;
+    }
+  </style>
+</head>
+<body>
+  <h1>404</h1>
+  <h2>Unauthorized</h2>
+  <p>You do not have access to the requested page.</p>
+
+<!--  <img src="https://cdn.jsdelivr.net/gh/realxbot/assets/bot.png" alt="Unauthorized Bot" class="bot-img" />-->
+
+  <a href="{% url 'login' %}" class="button">Back to Login</a>
+</body>
+</html>
