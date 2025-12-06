@@ -248,4 +248,11 @@ USE_L10N = False
 LOGIN_URL = '/login/'  # or whatever your login URL is
 
 DATE_INPUT_FORMATS = ['%d/%m/%Y']
- 
+
+
+# live
+# CURRENT_CLIENT_ID = "3c30e362-b108-49d2-b3b4-37fe01f4941d"
+# CURRENT_AUTHORITY = "2708cf11-c83a-466f-9399-671ebba3e8fc"
+# "local"
+CURRENT_CLIENT_ID = "52a3b712-cbab-461d-a03d-a6b234a9ed21"
+CURRENT_AUTHORITY = "2708cf11-c83a-466f-9399-671ebba3e8fc"

@@ -532,14 +532,6 @@ class AddStockDataService_latest:
         self.added = 0
         self.conference = conference
 
-    def _get_existing_stock(self, use_batch=False):
-        filters = {
-            "part_number": self.part_code,
-            "store": self.store,
-        }
-        if use_batch and self.batch:
-            filters["batch_number"] = self.batch 
-        return ItemStock.objects.filter(**filters).first()
 
     def _validate_serials(self):
         if not self.serials:
@@ -575,7 +567,7 @@ class AddStockDataService_latest:
         except Exception as e:
             self.errors.append(f"Failed to save stock history: {e}")
 
-    def _save_or_update_stock(self, stock_instance=None, serial_numbers=None):
+    def _save_or_update_stock(self,  serial_numbers=None):
         
         try:
             part = self.part_code
@@ -590,10 +582,10 @@ class AddStockDataService_latest:
                 unit=unit,
                 store=store,
                 batch_number=batch,
-                rate = rate
-            ) 
+                rate = rate,
+                conference_link = self.conference)
 
-            if serial_numbers: 
+            if serial_numbers:
                 stock_instance.serial_number.set(serial_numbers)
                 stock_instance.last_serial_history = self.laster_serial
                 stock_instance.save()
@@ -619,16 +611,9 @@ class AddStockDataService_latest:
         self.updated = self.previous + self.qty
         self.added = self.qty
 
-        existing = self._get_existing_stock()
         serial_objs =  self.serials
- 
-        if existing:
-            self.stock_data["id"] = existing.id
-            self.stock_data["qty"] = existing.current_stock + self.qty
-            self.serials = list(self.serials) + list(existing.serial_number.all())
 
-        # print("----", existing, serial_objs)
-        self._save_or_update_stock(existing, serial_objs) 
+        self._save_or_update_stock(serial_objs) 
         return {"success": self.success, "errors": self.errors}
 
     def add_non_tracked_stock(self):
@@ -636,12 +621,7 @@ class AddStockDataService_latest:
         self.updated = self.previous + self.qty
         self.added = self.qty
 
-        existing = self._get_existing_stock()
-        if existing:
-            self.stock_data["id"] = existing.id
-            self.stock_data["qty"] = existing.current_stock + self.qty
-
-        self._save_or_update_stock(existing)
+        self._save_or_update_stock()
         return {"success": self.success, "errors": self.errors}
 
     def _get_total_stock(self):

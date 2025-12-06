@@ -1675,7 +1675,7 @@ class ItemStock(models.Model):
     serial_number = models.ManyToManyField(SerialNumbers, blank=True)
     batch_number = models.ForeignKey(BatchNumber, null=True, blank=True, on_delete=models.SET_NULL)
     unit = models.ForeignKey(UOM, on_delete=models.PROTECT, null=True, blank=True)
-    conference = models.IntegerField(null=True, blank=True)
+    conference_link = models.ForeignKey("EnquriFromapi.conferencedata", on_delete=models.PROTECT, null=True, blank=True)
     rate = models.DecimalField(max_digits=12, decimal_places=3,null=True, blank=True )
     """only for serialnum to track last serial number"""
     last_serial_history = models.CharField(max_length=50, null=True, blank=True)
