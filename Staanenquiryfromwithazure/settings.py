@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
 from pathlib import Path
+from decouple import config
+
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -179,27 +182,27 @@ LOGIN_REDIRECT_URL = '/dashboard/'
 # }
 
 # staan Mr.j database
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'maxnik_stock',
-        'USER': 'postgres',
-        'PASSWORD': 'StaanDev',
-        'HOST': 'localhost',
-        'PORT': '5432'
-    }
-}
-# update data base
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'staanLocal',
+#         'NAME': 'maxnik_stock',
 #         'USER': 'postgres',
-#         'PASSWORD': 'Staan@2023',
+#         'PASSWORD': 'StaanDev',
 #         'HOST': 'localhost',
-#         'PORT': '5434'
+#         'PORT': '5432'
 #     }
 # }
+# update data base
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('NAME'),
+        'USER': config('USER'),
+        'PASSWORD': config('PASSWORD'),
+        'HOST': config('HOST'),
+        'PORT': config('PORT')
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

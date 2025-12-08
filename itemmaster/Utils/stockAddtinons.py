@@ -243,13 +243,23 @@ class StockReduce():
     def reduceBatchNumber(self):
         previousSates = ''
         total_closeing = 0
-        try:
-            print(self.partCode, "===+++++++", self.batch)
-            print(ItemStock.objects.filter(part_number=self.partCode_id, store=self.Store_id))
+        try: 
             stock_data_existing_list = ItemStock.objects.filter(part_number=self.partCode_id, store=self.Store_id,
                                                                 batch_number=self.batch_id)
             print("stock_data_existing_list", stock_data_existing_list)
-            first_stock_data = stock_data_existing_list.first()
+            first_stock_data = stock_data_existing_list
+
+            blance_stock_need_to_reduce = self.qty
+            for stock_data_existing in stock_data_existing_list:
+                if stock_data_existing.current_stock < blance_stock_need_to_reduce:
+                    blance_stock_need_to_reduce = blance_stock_need_to_reduce - stock_data_existing.current_stock
+                    stock_data_existing.delete()
+                else:
+                    stock_data_existing.current_stock = stock_data_existing - blance_stock_need_to_reduce
+                    stock_data_existing.save()
+
+
+
             
             total_previous_stock = (
                                         ItemStock.objects
