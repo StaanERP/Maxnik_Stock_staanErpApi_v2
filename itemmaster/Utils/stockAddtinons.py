@@ -494,13 +494,10 @@ class StockReduce_latest():
             stock_data_existing_list = ItemStock.objects.filter(part_number=self.partCode_id,
                                                                 store=self.Store_id)
             first_stock_data = stock_data_existing_list.first()
-            total_previous_stock = (
-                                        ItemStock.objects
-                                        .filter(part_number=self.partCode_id)
-                                        .aggregate(total=Sum("current_stock"))
-                                        .get("total") or 0
-                                    )
-            # previousSates = first_stock_data.current_stock
+            total_previous_stock = (ItemStock.objects
+                                    .filter(part_number=self.partCode_id)
+                                    .aggregate(total=Sum("current_stock"))
+                                    .get("total") or 0)
             reduce = self.qty 
             updatedState = (first_stock_data.current_stock) - self.qty
             first_stock_data.current_stock = updatedState
