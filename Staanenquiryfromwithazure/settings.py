@@ -181,17 +181,7 @@ LOGIN_REDIRECT_URL = '/dashboard/'
 #     }
 # }
 
-# staan Mr.j database
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'maxnik_stock',
-#         'USER': 'postgres',
-#         'PASSWORD': 'StaanDev',
-#         'HOST': 'localhost',
-#         'PORT': '5432'
-#     }
-# }
+ 
 # update data base
 DATABASES = {
     'default': {

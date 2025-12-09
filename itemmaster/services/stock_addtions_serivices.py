@@ -330,7 +330,7 @@ class StockAdditionService:
 
                         if not item.is_stock_added:
                             if item.batch_number:
-                                batch =  AddStockDataService(part_code=item.part_number, 
+                                batch =  AddStockDataService_latest(part_code=item.part_number, 
                                                     store=item.store,
                                                     batch=item.batch_number,
                                                     qty=item.qty,
@@ -362,7 +362,7 @@ class StockAdditionService:
                                     serial_obj = self.generate_serial_number(int(latest_stock),item.part_number.serial_format, item.qty, item.part_number.id)
                                 
                                     if serial_obj.get("new_serial") and len(serial_obj.get("new_serial")) > 0:
-                                        serial = AddStockDataService(part_code=item.part_number, 
+                                        serial = AddStockDataService_latest(part_code=item.part_number, 
                                                     store=item.store,
                                                     serials=serial_obj.get("new_serial"),
                                                     qty=item.qty,
@@ -401,7 +401,7 @@ class StockAdditionService:
                                                 serial_list_instance.append(new_serial)
                                             else:
                                                 return False 
-                                    serial = AddStockDataService(part_code=item.part_number, 
+                                    serial = AddStockDataService_latest(part_code=item.part_number, 
                                                     store=item.store,
                                                     serials=serial_list_instance,
                                                     qty=item.qty,
@@ -421,7 +421,7 @@ class StockAdditionService:
                                         self.errors.extend(serial.errors)
                                         return False
                             else:
-                                nobatch_noserial = AddStockDataService(part_code=item.part_number, 
+                                nobatch_noserial = AddStockDataService_latest(part_code=item.part_number, 
                                                     store=item.store,
                                                     qty=item.qty,
                                                     unit=item.unit,

@@ -353,6 +353,167 @@ class StockReduce():
                 "reduce": reduce, "updatedState": total_closeing, "stocklink": first_stock_data}
 
 
+
+class StockReduce_latest():
+    def __init__(self, partCode_id, Store_id, batch_id, serial_id_list, qty, partCode,batch, conference=None):
+        self.partCode_id = partCode_id
+        self.Store_id = Store_id
+        self.batch_id = batch_id
+        self.serial_id_list = serial_id_list
+        self.qty = qty
+        self.success = False
+        self.error = []
+        self.partCode = partCode if partCode else None
+        self.batch = batch if batch else None
+        self.conference = conference if conference else None
+
+    def reduceBatchNumber(self):
+        total_closing = 0
+        total_previous_stock = 0
+        reduce_qty = self.qty
+
+        try:
+            stock_qs = ItemStock.objects.select_for_update().filter(
+                part_number=self.partCode_id,
+                store=self.Store_id,
+                batch_number=self.batch_id,
+                conference_link=self.conference
+            ).order_by("id")  # FIFO
+
+            total_stock = sum((s.current_stock or 0) for s in stock_qs)
+
+            if total_stock < self.qty:
+                self.error.append(
+                    f"Check the Stock {self.partCode} batch {self.batch}"
+                )
+                return {
+                    "success": False,
+                    "error": self.error,
+                    "previousSates": 0,
+                    "reduce": 0,
+                    "updatedState": 0,
+                    "stocklink": None
+                }
+
+            balance = self.qty
+
+            for stock in stock_qs:
+                if balance <= 0:
+                    break
+
+                if stock.current_stock <= balance:
+                    # Fully consume this row
+                    balance -= stock.current_stock
+                    stock.delete()
+                else:
+                    # Partially reduce this row
+                    stock.current_stock = stock.current_stock - balance
+                    stock.save()
+                    balance = 0
+
+            # Recalculate total stock after reduction
+            total_previous_stock = ItemStock.objects.filter(
+                part_number=self.partCode_id
+            ).aggregate(total=Sum("current_stock")).get("total") or 0
+
+            total_closing = total_previous_stock
+            self.success = True
+
+        except Exception as e:
+            self.error.append(
+                f"Unexpected error in stock reduce: {str(e)} part {self.partCode} batch {self.batch}"
+            )
+
+        return {
+            "success": self.success,
+            "error": self.error,
+            "previousSates": total_previous_stock,
+            "reduce": reduce_qty,
+            "updatedState": total_closing,
+            "stocklink": None
+        }
+
+    def reduceSerialNumber(self):
+        updated_serial_list = []
+        previousSates = ''
+        total_closeing = 0
+        try:
+            
+            stock_qs = ItemStock.objects.select_for_update().filter(part_number=self.partCode_id,
+                                                                store=self.Store_id,
+                                                                conference_link=self.conference).order_by("id")  # FIFO
+            total_stock = sum((s.current_stock or 0) for s in stock_qs)
+            if total_stock < self.qty:
+                self.error.append(
+                    f"Check the Stock {self.partCode}"
+                )
+                return {
+                    "success": False,
+                    "error": self.error,
+                    "previousSates": 0,
+                    "reduce": 0,
+                    "updatedState": 0,
+                    "stocklink": None
+                }
+            
+            first_stock_data = stock_data_existing_list.first()
+            total_previous_stock = (
+                                        ItemStock.objects
+                                        .filter(part_number=self.partCode_id)
+                                        .aggregate(total=Sum("current_stock"))
+                                        .get("total") or 0
+                                    )
+            # previousSates = stock_data_existing_list.current_stock
+            reduce = self.qty
+            
+            if not total_previous_stock:
+                self.error.append(" Serial Stock Not available")
+                return {"success": self.success, "error": self.error, "previousSates": 0,
+                        "reduce": 0, "updatedState": 0, "stocklink": first_stock_data}
+            
+            updatedState = 0
+            current_serials = first_stock_data.serial_number.all()
+            for current_serial in current_serials:
+                if current_serial.id not in self.serial_id_list:
+                    updated_serial_list.append(current_serial)
+            first_stock_data.current_stock = int(first_stock_data.current_stock) - self.qty
+            first_stock_data.serial_number.set(updated_serial_list)
+            first_stock_data.save()
+            updatedState = int(first_stock_data.current_stock)
+            self.success = True
+            total_closeing = (total_previous_stock or 0) - (self.qty or 0)
+        except Exception as e: 
+            self.error.append(f"Unexpeted error in stock reduce {str(e)} part {self.partCode}   ")
+        return {"success": self.success, "error": self.error, "previousSates": total_previous_stock,
+                "reduce": reduce, "updatedState": total_closeing, "stocklink": first_stock_data}
+
+    def reduceNoBatchNoSerial(self):
+        previousSates = ''
+        total_closeing = 0
+        try:
+            stock_data_existing_list = ItemStock.objects.filter(part_number=self.partCode_id,
+                                                                store=self.Store_id)
+            first_stock_data = stock_data_existing_list.first()
+            total_previous_stock = (
+                                        ItemStock.objects
+                                        .filter(part_number=self.partCode_id)
+                                        .aggregate(total=Sum("current_stock"))
+                                        .get("total") or 0
+                                    )
+            # previousSates = first_stock_data.current_stock
+            reduce = self.qty 
+            updatedState = (first_stock_data.current_stock) - self.qty
+            first_stock_data.current_stock = updatedState
+            first_stock_data.save()
+            self.success = True
+            total_closeing = (total_previous_stock or 0) - (self.qty or 0)
+        except Exception as e:
+            self.error.append(f"Unexpeted error in stock reduce {str(e)} part {self.partCode}   ")
+        return  {"success": self.success, "error": self.error, "previousSates": total_previous_stock,
+                "reduce": reduce, "updatedState": total_closeing, "stocklink": first_stock_data}
+
+
+
 class AddStockDataService:
 
     def __init__(self, part_code, store,  qty, unit,
@@ -595,6 +756,7 @@ class AddStockDataService_latest:
                 rate = rate,
                 conference_link = self.conference)
 
+            print("serial_numbers", serial_numbers)
             if serial_numbers:
                 stock_instance.serial_number.set(serial_numbers)
                 stock_instance.last_serial_history = self.laster_serial

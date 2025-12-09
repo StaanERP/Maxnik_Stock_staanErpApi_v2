@@ -2236,7 +2236,7 @@ class RawMaterialBomLink(models.Model):
 
 class StockHistory(models.Model):
     action = models.CharField(max_length=10)
-    stock_link = models.ForeignKey(ItemStock, on_delete=models.CASCADE)
+    stock_link = models.ForeignKey(ItemStock, on_delete=models.CASCADE, null=True, blank=True)
     store_link = models.ForeignKey(Store, on_delete=models.PROTECT, null=True, blank=True)
     part_number = models.ForeignKey(ItemMaster, on_delete=models.PROTECT, null=True, blank=True)
     previous_state = models.CharField(max_length=250)

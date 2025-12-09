@@ -19,45 +19,46 @@ class StockdeletionService:
         self.old_inventory_approval = []
     
     def process(self):
-        if self.status == "Draft":
-            if not self.validate_requiry_field():
+        with transaction.atomic():
+            if self.status == "Draft":
+                if not self.validate_requiry_field():
+                    return self.response()
+                if not self.validate_inventory_approval():
+                    return self.response()
+                if not self.validate_inventory_approval_with_serializer():
+                    return self.response()
+                if not self.save_inventory_handler():
+                    return self.response()
                 return self.response()
-            if not self.validate_inventory_approval():
-                return self.response()
-            if not self.validate_inventory_approval_with_serializer():
-                return self.response()
-            if not self.save_inventory_handler():
-                return self.response()
-            return self.response()
-        elif self.status == "Submit":
-            if not self.validate_requiry_field():
-                return self.response()
-            if not self.check_the_stock():
-                return self.response()
-            if not self.stock_reduce():
-                return self.response()
-            if self.inventory_handler:
-                self.inventory_handler.status = self.status_id
-                self.inventory_handler.save()
-                self.success=True
-                return self.response()
+            elif self.status == "Submit":
+                if not self.validate_requiry_field():
+                    return self.response()
+                if not self.check_the_stock():
+                    return self.response()
+                if not self.stock_reduce():
+                    return self.response()
+                if self.inventory_handler:
+                    self.inventory_handler.status = self.status_id
+                    self.inventory_handler.save()
+                    self.success=True
+                    return self.response()
+                else:
+                    self.errors.append("Inventory Handler is missing.")
+                    return self.response()
+            elif self.status == "Cancel":
+                if not self.validate_requiry_field():
+                    return self.response()
+                if self.inventory_handler:
+                    self.inventory_handler.status = self.status_id
+                    self.inventory_handler.save()
+                    self.success=True
+                    return self.response()
+                else:
+                    self.errors.append("Inventory Handler is missing.")
+                    return self.response()
             else:
-                self.errors.append("Inventory Handler is missing.")
+                self.errors.append(f"{self.status} not found.")
                 return self.response()
-        elif self.status == "Cancel":
-            if not self.validate_requiry_field():
-                return self.response()
-            if self.inventory_handler:
-                self.inventory_handler.status = self.status_id
-                self.inventory_handler.save()
-                self.success=True
-                return self.response()
-            else:
-                self.errors.append("Inventory Handler is missing.")
-                return self.response()
-        else:
-            self.errors.append(f"{self.status} not found.")
-            return self.response()
 
     
     def get_or_create_batch(self, item_master_id, batch_name):
@@ -245,22 +246,14 @@ class StockdeletionService:
     
     def validate_stock(self, item, stock_data_existing_list):
         required_qty = item.qty or 0 
-        conderence = self.conference.id if self.conference and self.conference.id else None
-        conference_qty = get_conference_stock(item.part_number.id, self.store.id,conderence )
-        total_current_stock = sum(single_stock.current_stock or 0 for single_stock in stock_data_existing_list)
+    
+        actual_stock = sum(single_stock.current_stock or 0 for single_stock in stock_data_existing_list)
         
-        if self.conference:
-            balance = conference_qty - required_qty
-            return balance >= 0, balance
-        else:
-            actual_stock = (total_current_stock or 0)
-            balance = actual_stock - required_qty
-            return balance >= 0, balance
-
+        balance = actual_stock - required_qty
+        return balance >= 0, balance
 
     def check_the_stock(self):
         try:
-
             if not self.inventory_handler:
                 self.errors.append(f"Inventory with ID {self.kwargs.get('id')} not found.")
                 return False
@@ -272,10 +265,10 @@ class StockdeletionService:
                     stock_data_existing_list = ItemStock.objects.filter(
                                                 part_number=item.part_number,
                                                 store=self.store,
-                                                batch_number=item.batch_number if item.batch_number else None
-                                            )
+                                                batch_number=item.batch_number if item.batch_number else None,
+                                                conference_link__id = self.conference.id if self.conference else None)
                     
-                    if not stock_data_existing_list: 
+                    if not stock_data_existing_list:
                         self.errors.append(f"{item.part_number} {item.batch_number.batch_number_name or ''} is not available.")
                         return False
                     is_sufficient, balance_stock = self.validate_stock(item, stock_data_existing_list)
@@ -305,8 +298,8 @@ class StockdeletionService:
                             return False
                 return True
         except Exception as e:
-            print(e)
-
+            self.errors.append(f"Unexpeted error in Stock Check {str(e)}.")
+            return False
 
     def stock_reduce(self):
         all_success = True
@@ -323,8 +316,9 @@ class StockdeletionService:
                                 qty=item.qty,
                                 serial_id_list=serial_ids,
                                 partCode = item.part_number,
-                                batch = item.batch_number.batch_number_name if item.batch_number and item.batch_number.batch_number_name  else None
-                            ) 
+                                batch = item.batch_number.batch_number_name if item.batch_number and item.batch_number.batch_number_name  else None,
+                                conference = self.conference if self.conference else None
+                            )
                             
                             if item.batch_number:
                                 result = stockReduce.reduceBatchNumber()
@@ -353,10 +347,11 @@ class StockdeletionService:
                                         self.conference.id if self.conference and self.conference.id else None
                                     )
                                 except Exception as e:
-                                    print(e)
+                                    self.errors.append(f"Unexpeted error in Stock reduce {str(e)}.")
+                                    return False
                                     
                             else:
-                                self.errors.append(result["error"])
+                                self.errors.extend(result["error"])
                                 all_success = False
                                 return False
                     return all_success
